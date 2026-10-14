@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>XPP lite – Dynamical Systems</title>
+  <meta name="description" content="XPP lite: phase planes, nullclines, equilibria, time series, 3D orbits and AUTO-style bifurcation diagrams for ODE systems written in XPP .ode syntax. Touch friendly, runs in the browser.">
+  <meta name="theme-color" content="#2d3a4a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="XPP lite">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="toolbar">
+    <a href="../" class="tb-btn" id="btnHome" title="All tools" aria-label="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h5v-6h3v6h5V10"/></svg>
+    </a>
+    <button id="btnPanel" class="tb-btn" title="Show/hide panel (model, parameters, settings)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      <span class="lbl">Panel</span>
+    </button>
+    <div id="title" class="eq-title"></div>
+    <div class="seg" id="viewSeg" role="radiogroup" aria-label="View">
+      <button data-view="phase" title="Phase plane (1)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V3M3 21h18"/><path d="M14 9.5c2.5.5 3 3.5.5 5s-6.5.5-7-2.5 3-6 7-5.5 6 4 4.5 7.5"/></svg>
+        <span class="lbl">Phase</span>
+      </button>
+      <button data-view="time" title="Time series (2)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V3M3 21h18"/><path d="M4 13c2-7 4-7 5.5 0s3.5 7 5.5 0 4-6 6-2"/></svg>
+        <span class="lbl">Time</span>
+      </button>
+      <button data-view="3d" title="3D view (3)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12 4 7.5"/></svg>
+        <span class="lbl">3D</span>
+      </button>
+      <button data-view="bif" title="Bifurcation diagram (4)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h9"/><path d="M11 12c3 0 5-6 11-7M11 12c3 0 5 6 11 7"/><path d="M13 12h2M18 12h2"/></svg>
+        <span class="lbl">Bif</span>
+      </button>
+    </div>
+    <div class="seg" id="modeSeg" role="radiogroup" aria-label="Tap mode">
+      <button data-mode="ic" title="Tap sets initial condition and integrates">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" class="fill"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg>
+        <span class="lbl">Init</span>
+      </button>
+      <button data-mode="eq" title="Tap to find an equilibrium nearby">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" class="fill"/></svg>
+        <span class="lbl">Equil</span>
+      </button>
+      <button data-mode="zoom" title="Drag a rectangle or tap to zoom in">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5 20 20M10 7v6M7 10h6"/></svg>
+        <span class="lbl">Zoom</span>
+      </button>
+    </div>
+    <button id="btnGo" class="tb-btn go" title="Integrate from initial conditions (G)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" class="fill"/></svg>
+      <span class="lbl">Go</span>
+    </button>
+    <button id="btnFit" class="tb-btn" title="Fit window to data (F)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      <span class="lbl">Fit</span>
+    </button>
+    <button id="btnErase" class="tb-btn" title="Erase orbits (E)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5 13.5 7l5 5L11 19.5H7z"/><path d="M11 19.5h9"/></svg>
+      <span class="lbl">Erase</span>
+    </button>
+    <button id="btnStop" class="tb-btn stop" hidden title="Stop computation (Esc)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" class="fill"/></svg>
+      <span class="lbl">Stop</span>
+    </button>
+    <button id="btnMenu" class="tb-btn" title="Menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" class="fill"/><circle cx="12" cy="12" r="1.6" class="fill"/><circle cx="19" cy="12" r="1.6" class="fill"/></svg>
+      <span class="lbl">Menu</span>
+    </button>
+  </header>
+
+  <main>
+    <aside id="panel" class="panel">
+      <div class="panel-head">
+        <div class="tabs" id="tabs" role="tablist">
+          <button data-tab="model">Model</button>
+          <button data-tab="par">Par</button>
+          <button data-tab="ic">Init</button>
+          <button data-tab="num">Num</button>
+          <button data-tab="plot">Plot</button>
+          <button data-tab="eq">Equil</button>
+          <button data-tab="bif">Bif</button>
+        </div>
+        <button type="button" id="btnPanelClose" class="icon-btn close-panel" aria-label="Close">✕</button>
+      </div>
+      <div class="panel-body" id="panelBody">
+
+        <section class="tab" data-tab="model">
+          <div class="row">
+            <select id="gallerySelect" aria-label="Examples"></select>
+          </div>
+          <textarea id="odeText" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="ODE file"></textarea>
+          <div id="odeErrors" class="errlist" hidden></div>
+          <button type="button" id="btnApply" class="primary big">Apply model</button>
+          <p class="hint">Ctrl/⌘+Enter applies. Syntax: Menu → Help → ODE file syntax.</p>
+          <div class="small-actions">
+            <button type="button" id="btnOpenOde">Open .ode…</button>
+            <button type="button" id="btnSaveOde">Download .ode</button>
+            <button type="button" id="btnSaveMine">Save to My models…</button>
+            <button type="button" id="btnDelMine">Remove from My models…</button>
+            <button type="button" id="btnNewModel">New</button>
+          </div>
+          <!-- no accept filter: iPadOS greys out files with unknown extensions such as .ode -->
+          <input type="file" id="odeFile" hidden>
+        </section>
+
+        <section class="tab" data-tab="par">
+          <div id="parList"></div>
+          <p id="parEmpty" class="hint" hidden>This model has no parameters. Declare them with <code>par a=1, b=2</code>.</p>
+          <div class="small-actions">
+            <button type="button" id="btnParReset">Reset to file values</button>
+          </div>
+          <p class="hint">Drag a slider to re-integrate live. Edit the small fields to change a slider's range.</p>
+        </section>
+
+        <section class="tab" data-tab="ic">
+          <div class="grid2" id="icList"></div>
+          <button type="button" id="btnGo2" class="primary big">Go (integrate)</button>
+          <div class="small-actions">
+            <button type="button" id="btnLast">Last (use end point)</button>
+            <button type="button" id="btnContinue">Continue</button>
+            <button type="button" id="btnRange">Range…</button>
+            <button type="button" id="btnIcReset">Reset to file values</button>
+          </div>
+          <p class="hint">In the phase plane, tap (mode <b>Init</b>) to set the plotted variables and integrate; drag to preview orbits live.</p>
+        </section>
+
+        <section class="tab" data-tab="num">
+          <div class="row"><label for="numMethod">Method</label><select id="numMethod"></select></div>
+          <div class="grid2">
+            <label for="numTotal">Total time</label><input id="numTotal" inputmode="decimal">
+            <label for="numT0">Start time t0</label><input id="numT0" inputmode="decimal">
+            <label for="numDt">dt (step / output)</label><input id="numDt" inputmode="decimal">
+            <label for="numNout">Output every n</label><input id="numNout" inputmode="numeric">
+            <label for="numTrans">Transient</label><input id="numTrans" inputmode="decimal">
+            <label for="numRtol">Rel. tolerance</label><input id="numRtol" inputmode="decimal">
+            <label for="numAtol">Abs. tolerance</label><input id="numAtol" inputmode="decimal">
+            <label for="numBound">Bound</label><input id="numBound" inputmode="decimal">
+          </div>
+          <h4>Direction</h4>
+          <div class="seg seg-wide" id="numDir">
+            <button data-v="forward">Forward</button><button data-v="backward">Backward</button><button data-v="both">Both</button>
+          </div>
+          <label class="check"><input type="checkbox" id="numLive"> Re-integrate all orbits when parameters change</label>
+          <p class="hint">Fixed-step methods use step dt. Adaptive methods (Dormand–Prince, Rosenbrock) control the step by the tolerances and output every dt·n time units. Transient: points with |t−t0| below this value are not stored.</p>
+        </section>
+
+        <section class="tab" data-tab="plot">
+          <h4>Phase plane</h4>
+          <div class="grid2">
+            <label for="plX">X axis</label><select id="plX"></select>
+            <label for="plY">Y axis</label><select id="plY"></select>
+          </div>
+          <div class="grid4">
+            <label for="plXlo">xlo</label><input id="plXlo" inputmode="decimal">
+            <label for="plXhi">xhi</label><input id="plXhi" inputmode="decimal">
+            <label for="plYlo">ylo</label><input id="plYlo" inputmode="decimal">
+            <label for="plYhi">yhi</label><input id="plYhi" inputmode="decimal">
+          </div>
+          <div class="grid2">
+            <label for="plField">Direction field</label>
+            <select id="plField"><option value="none">None</option><option value="arrows">Unit arrows</option><option value="scaled">Scaled arrows</option></select>
+            <label for="plDensity">Field density</label>
+            <select id="plDensity"><option value="10">Coarse</option><option value="16">Medium</option><option value="22">Fine</option><option value="30">Very fine</option></select>
+          </div>
+          <label class="check"><input type="checkbox" id="plNull"> Nullclines <span class="swatch" style="background:#e0161b"></span><span class="swatch" style="background:#11a04a"></span></label>
+          <label class="check"><input type="checkbox" id="plEq"> Equilibria (filled = stable)</label>
+          <label class="check"><input type="checkbox" id="plMan"> Saddle separatrices / 1-D manifolds</label>
+          <p id="sliceNote" class="hint" hidden></p>
+
+          <h4>Time series</h4>
+          <div id="plTimeVars" class="chips"></div>
+          <div class="grid4">
+            <label for="plTlo">tlo</label><input id="plTlo" inputmode="decimal">
+            <label for="plThi">thi</label><input id="plThi" inputmode="decimal">
+            <label for="plTylo">ylo</label><input id="plTylo" inputmode="decimal">
+            <label for="plTyhi">yhi</label><input id="plTyhi" inputmode="decimal">
+          </div>
+          <label class="check"><input type="checkbox" id="plAutoTime"> Fit time series after each integration</label>
+
+          <h4>3D view</h4>
+          <div class="grid2">
+            <label for="pl3x">X</label><select id="pl3x"></select>
+            <label for="pl3y">Y</label><select id="pl3y"></select>
+            <label for="pl3z">Z</label><select id="pl3z"></select>
+          </div>
+          <div class="small-actions"><button type="button" id="btn3dReset">Reset rotation</button></div>
+
+          <h4>Appearance</h4>
+          <div class="grid2">
+            <label for="plLw">Line width</label>
+            <select id="plLw"><option value="1">Thin</option><option value="1.6">Normal</option><option value="2.4">Thick</option></select>
+            <label for="plFont">Font size</label>
+            <select id="plFont"><option>12</option><option>14</option><option>16</option><option>18</option></select>
+          </div>
+        </section>
+
+        <section class="tab" data-tab="eq">
+          <button type="button" id="btnEqFind" class="primary big">Find equilibrium from initial values</button>
+          <div class="small-actions">
+            <button type="button" id="btnEqSearch">Search window (grid)</button>
+            <button type="button" id="btnEqClear">Clear list</button>
+          </div>
+          <p class="hint">Or choose tap mode <b>Equil</b> and tap near an equilibrium in the phase plane.</p>
+          <div id="eqList"></div>
+        </section>
+
+        <section class="tab" data-tab="bif">
+          <h4>Equilibrium continuation</h4>
+          <div class="grid2">
+            <label for="bfPar">Parameter</label><select id="bfPar"></select>
+          </div>
+          <div class="grid4">
+            <label for="bfMin">min</label><input id="bfMin" inputmode="decimal">
+            <label for="bfMax">max</label><input id="bfMax" inputmode="decimal">
+            <label for="bfDs">ds</label><input id="bfDs" inputmode="decimal">
+            <label for="bfDsmax">dsmax</label><input id="bfDsmax" inputmode="decimal">
+          </div>
+          <div class="grid2">
+            <label for="bfNmax">Max points</label><input id="bfNmax" inputmode="numeric">
+            <label for="bfDir">Direction</label>
+            <select id="bfDir"><option value="both">Both ways</option><option value="up">Increasing</option><option value="down">Decreasing</option></select>
+            <label for="bfY">Y axis</label><select id="bfY"></select>
+          </div>
+          <button type="button" id="btnBifRun" class="primary big">Continue from equilibrium</button>
+          <p class="hint">Starts at the equilibrium nearest to the initial values (Newton) at the current parameter value. Thick = stable, thin = unstable. Tap a point in the diagram for details.</p>
+
+          <h4>Periodic orbits (simulation sweep)</h4>
+          <div class="grid4">
+            <label for="swSteps">steps</label><input id="swSteps" inputmode="numeric">
+            <label for="swTrans">transient</label><input id="swTrans" inputmode="decimal">
+            <label for="swSample">sample</label><input id="swSample" inputmode="decimal">
+          </div>
+          <label class="check"><input type="checkbox" id="swUpDown"> Sweep up and back down (hysteresis)</label>
+          <button type="button" id="btnSweep" class="secondary-big">Sweep parameter by simulation</button>
+          <p class="hint">Integrates at each parameter value from the end state of the previous one and plots max/min (green dots) of stable oscillations. Choose “period” as Y axis to see periods.</p>
+          <div class="small-actions"><button type="button" id="btnBifClear">Clear diagram</button></div>
+          <h4>Special points</h4>
+          <div id="bifList" class="speclist"></div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="plot-area">
+      <div id="plotWrap" class="plot-wrap">
+        <canvas id="baseCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+      <footer class="statusbar">
+        <span id="status">Ready.</span>
+        <span id="coords"></span>
+      </footer>
+    </section>
+  </main>
+  <div id="scrim" class="scrim" hidden></div>
+
+  <!-- Main menu -->
+  <dialog id="menuDlg" class="sheet">
+    <div class="sheet-head"><strong>XPP lite</strong><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="sheet-body">
+      <section>
+        <h3>Initial conditions</h3>
+        <button data-action="go">Go (integrate from initial values)</button>
+        <button data-action="last">Last (start from end of last orbit)</button>
+        <button data-action="continue">Continue last orbit</button>
+        <button data-action="range">Range… (sweep initial values or a parameter)</button>
+        <button data-action="keyboard">New initial values (keyboard)…</button>
+      </section>
+      <section>
+        <h3>Orbits</h3>
+        <button data-action="erase">Erase orbits</button>
+        <button data-action="freeze">Freeze current orbits</button>
+        <button data-action="unfreeze">Delete frozen orbits</button>
+        <button data-action="data">Data viewer…</button>
+      </section>
+      <section>
+        <h3>Window</h3>
+        <button data-action="fit">Fit window to data</button>
+        <button data-action="zoomOut">Zoom out ×2</button>
+        <button data-action="defaultWin">Default window (from file)</button>
+        <p class="hint">Pinch with two fingers to zoom and pan. With a mouse, use the wheel to zoom and Shift-drag to zoom into a rectangle.</p>
+      </section>
+      <section>
+        <h3>File</h3>
+        <button data-action="savePng">Save image (PNG)</button>
+        <button data-action="csv">Export last orbit (CSV)</button>
+        <button data-action="saveOde">Download .ode file</button>
+        <button data-action="openOde">Open .ode file…</button>
+      </section>
+      <section>
+        <h3>Help</h3>
+        <button data-action="syntax">ODE file syntax</button>
+        <button data-action="howto">Using XPP lite</button>
+        <button data-action="about">About</button>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Generic dialog -->
+  <dialog id="dlg" class="modal">
+    <form method="dialog" id="dlgForm">
+      <div class="sheet-head"><strong id="dlgTitle"></strong><button class="icon-btn" value="cancel" formnovalidate aria-label="Close">✕</button></div>
+      <div id="dlgBody" class="dlg-body"></div>
+      <div id="dlgButtons" class="dlg-buttons"></div>
+    </form>
+  </dialog>
+
+  <!-- Data viewer -->
+  <dialog id="dataDlg" class="data-dlg">
+    <div class="sheet-head">
+      <strong>Data viewer</strong>
+      <span class="data-tools">
+        <select id="dataOrbit" aria-label="Orbit"></select>
+        <button id="dataCsv" class="small-btn">Export CSV</button>
+        <button class="icon-btn" data-close aria-label="Close">✕</button>
+      </span>
+    </div>
+    <div id="dataInfo" class="data-info"></div>
+    <div id="dataHead" class="data-head"></div>
+    <div id="dataScroll" class="data-scroll"><div id="dataSpacer"><div id="dataRows"></div></div></div>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

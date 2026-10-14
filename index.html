@@ -2,203 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>DFIELD – Direction Fields</title>
-  <meta name="description" content="DFIELD: interactive direction field and solution plotter for first-order ODEs x' = f(t,x). Web port, touch friendly.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Math Tools – classic math software, reborn for the web</title>
+  <meta name="description" content="Touch-friendly web versions of classic math teaching software: direction fields, plotting, dynamical systems, 3D math objects, iterated maps, interactive mathlets and dynamic geometry.">
   <meta name="theme-color" content="#2d3a4a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="DFIELD">
+  <meta name="apple-mobile-web-app-title" content="Math Tools">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    :root {
+      --bar: #2d3a4a; --accent: #2f6fdf; --bg: #eef0f3; --card: #fff; --text: #1b1f24; --muted: #5f6772;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); min-height: 100dvh; -webkit-text-size-adjust: 100%; }
+    header {
+      background: var(--bar); color: #f2f5f8;
+      padding: calc(28px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) 28px calc(24px + env(safe-area-inset-left));
+    }
+    header .inner { max-width: 1180px; margin: 0 auto; }
+    h1 { margin: 0 0 6px; font-size: clamp(26px, 4vw, 38px); letter-spacing: -.01em; }
+    header p { margin: 0; color: #c8d1dc; font-size: 17px; max-width: 720px; line-height: 1.45; }
+    main {
+      max-width: 1180px; margin: 0 auto;
+      padding: 24px calc(20px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+    .card {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: var(--card); border-radius: 18px; padding: 18px;
+      text-decoration: none; color: inherit;
+      box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+      transition: transform .12s ease, box-shadow .12s ease;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 132px;
+    }
+    .card:hover { box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 10px 28px rgba(0,0,0,.12); }
+    .card:active { transform: scale(.98); }
+    .card img { width: 76px; height: 76px; border-radius: 17px; flex: none; background: var(--bar); }
+    .card h2 { margin: 2px 0 2px; font-size: 20px; }
+    .card .origin { color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.4; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tags span { font-size: 12px; background: #eef2fb; color: #3b5590; padding: 3px 8px; border-radius: 999px; }
+    footer { color: var(--muted); font-size: 13px; margin-top: 32px; line-height: 1.5; }
+    @media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
-  <header class="toolbar">
-    <button id="btnPanel" class="tb-btn" title="Equation">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      <span class="lbl">Equation</span>
-    </button>
-    <div id="eqTitle" class="eq-title"></div>
-    <div class="seg" id="modeSeg" role="radiogroup" aria-label="Touch mode">
-      <button data-mode="solve" class="on" title="Tap to plot a solution">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c4 0 5-12 9-12s5 12 9 12"/><circle cx="12" cy="6" r="2" class="fill"/></svg>
-        <span class="lbl">Solve</span>
-      </button>
-      <button data-mode="zoom" title="Zoom in (drag a rectangle or tap)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5 20 20M10 7v6M7 10h6"/></svg>
-        <span class="lbl">Zoom</span>
-      </button>
-      <button data-mode="delete" title="Tap an orbit to delete it">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>
-        <span class="lbl">Delete</span>
-      </button>
-      <button data-mode="text" title="Place a text annotation">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M12 5v15"/></svg>
-        <span class="lbl">Text</span>
-      </button>
+  <header>
+    <div class="inner">
+      <h1>Math Tools</h1>
+      <p>Classic mathematics teaching software, rebuilt for the browser. Works offline-friendly on iPad and desktop, with touch, pinch and Apple Pencil. Choose an application to launch.</p>
     </div>
-    <button id="btnZoomOut" class="tb-btn" title="Zoom out">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5 20 20M7 10h6"/></svg>
-      <span class="lbl">Zoom out</span>
-    </button>
-    <button id="btnStop" class="tb-btn stop" disabled title="Stop ODE solver">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" class="fill"/></svg>
-      <span class="lbl">Stop</span>
-    </button>
-    <button id="btnMenu" class="tb-btn" title="Menu">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" class="fill"/><circle cx="12" cy="12" r="1.6" class="fill"/><circle cx="19" cy="12" r="1.6" class="fill"/></svg>
-      <span class="lbl">Menu</span>
-    </button>
   </header>
-
   <main>
-    <aside id="panel" class="panel">
-      <form id="eqForm" autocomplete="off" spellcheck="false" onsubmit="return false">
-        <div class="panel-head">
-          <select id="gallerySelect" aria-label="Gallery"></select>
-          <button type="button" id="btnPanelClose" class="icon-btn close-panel" aria-label="Close">✕</button>
-        </div>
-        <p id="eqDescription" class="description"></p>
-
-        <div class="eq-line">
-          <input id="depVar" class="var-input" maxlength="8" autocapitalize="off" aria-label="Dependent variable">
-          <span class="prime">´ =</span>
-          <input id="expr" class="expr-input" autocapitalize="off" aria-label="Right-hand side f(t,x)">
-        </div>
-        <div class="row">
-          <label for="indepVar">Independent variable:</label>
-          <input id="indepVar" class="var-input" maxlength="8" autocapitalize="off">
-        </div>
-
-        <fieldset>
-          <legend>Parameter Expressions</legend>
-          <div id="params"></div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Display Window</legend>
-          <div class="grid2">
-            <label id="lblTmin" for="tmin"></label><input id="tmin" inputmode="decimal">
-            <label id="lblTmax" for="tmax"></label><input id="tmax" inputmode="decimal">
-            <label id="lblXmin" for="xmin"></label><input id="xmin" inputmode="decimal">
-            <label id="lblXmax" for="xmax"></label><input id="xmax" inputmode="decimal">
-          </div>
-        </fieldset>
-
-        <p id="eqError" class="error" hidden></p>
-
-        <label class="check"><input type="checkbox" id="keepIC"> Use current initial values in new graph</label>
-        <button type="button" id="btnGraph" class="primary big">Graph</button>
-
-        <div class="small-actions">
-          <button type="button" id="btnAddGallery">Add to gallery…</button>
-          <button type="button" id="btnRemoveGallery">Remove from gallery</button>
-          <button type="button" id="btnClearMenu">Clear…</button>
-        </div>
-      </form>
-    </aside>
-
-    <section class="plot-area">
-      <div id="plotWrap" class="plot-wrap">
-        <canvas id="baseCanvas"></canvas>
-        <canvas id="overlayCanvas"></canvas>
-      </div>
-      <footer class="statusbar">
-        <span id="status">Ready.</span>
-        <span id="coords"></span>
-        <button id="btnLog" class="link-btn">Messages <span id="logBadge" class="badge" hidden></span></button>
-      </footer>
-      <div id="logPanel" class="log-panel" hidden>
-        <div class="log-head">
-          <strong>DFIELD Messages</strong>
-          <span>
-            <button id="btnLogClear" class="link-btn">clear</button>
-            <button id="btnLogHide" class="link-btn">hide</button>
-          </span>
-        </div>
-        <pre id="logText"></pre>
-      </div>
-    </section>
+    <div class="grid" id="apps"></div>
+    <footer>
+      All applications run entirely in your browser; nothing is uploaded. They are independent web re-implementations of
+      the original programs; credits to the original authors are in each app's <em>About</em> dialog.
+      Tip: in Safari use Share → “Add to Home Screen” to run them full screen.
+    </footer>
   </main>
-  <div id="scrim" class="scrim" hidden></div>
-
-  <!-- Main menu -->
-  <dialog id="menuDlg" class="sheet">
-    <div class="sheet-head"><strong>DFIELD</strong><button class="icon-btn" data-close aria-label="Close">✕</button></div>
-    <div class="sheet-body">
-      <section>
-        <h3>Solution</h3>
-        <button data-action="keyboard">Keyboard input of initial value…</button>
-        <button data-action="recalc">Recalculate all solutions</button>
-        <button data-action="deleteAll">Delete all orbits</button>
-        <button data-action="textAnno">Enter text annotation…</button>
-        <button data-action="eraseLastText">Erase last text annotation</button>
-        <button data-action="eraseAllText">Erase all text annotations</button>
-      </section>
-      <section>
-        <h3>ODE Solver</h3>
-        <div class="radio-list" id="optSolver"></div>
-        <button data-action="solverSettings">Solver settings…</button>
-      </section>
-      <section>
-        <h3>Orbit Direction</h3>
-        <div class="seg seg-wide" id="optDirection">
-          <button data-v="both">Both</button><button data-v="forward">Forward</button><button data-v="backward">Backward</button>
-        </div>
-        <h3>Zoom-in</h3>
-        <div class="radio-list" id="optZoom">
-          <label><input type="radio" name="zoom" value="rect"> Select rectangle (tap = 2× point)</label>
-          <label><input type="radio" name="zoom" value="point"> Select point (2× magnification)</label>
-          <label><input type="radio" name="zoom" value="square"> Square domain around point</label>
-        </div>
-        <p class="hint">Pinch with two fingers to zoom and pan at any time. With a mouse, Shift/Ctrl-click zooms.</p>
-      </section>
-      <section>
-        <h3>Display</h3>
-        <button data-action="fieldSettings">Direction field settings…</button>
-        <label class="check"><input type="checkbox" id="optShowPoints"> Show points</label>
-        <label class="check"><input type="checkbox" id="optCrosshairs"> Show cross-hairs</label>
-        <div class="row"><label for="optBg">Background</label>
-          <select id="optBg"><option value="white">White</option><option value="black">Black</option></select></div>
-        <div class="row"><label for="optFont">Font size</label>
-          <select id="optFont"><option>10</option><option>12</option><option>14</option><option>16</option><option>18</option></select></div>
-        <div class="row"><label for="optDelay">Delay per point</label>
-          <select id="optDelay">
-            <option value="0">No delay</option><option value="1">1 ms</option><option value="2">2 ms</option>
-            <option value="5">5 ms</option><option value="10">10 ms</option><option value="25">25 ms</option>
-            <option value="50">50 ms</option><option value="100">100 ms</option><option value="250">250 ms</option>
-            <option value="500">1/2 second</option><option value="1000">1 second</option>
-          </select></div>
-      </section>
-      <section>
-        <h3>File</h3>
-        <button data-action="savePng">Save image (PNG)…</button>
-        <button data-action="print">Print…</button>
-        <button data-action="exportIni">Save preferences / gallery (dfield.ini)…</button>
-        <button data-action="importIni">Open preferences / gallery…</button>
-        <input type="file" id="iniFile" accept=".ini,text/plain" hidden>
-      </section>
-      <section>
-        <h3>Help</h3>
-        <button data-action="syntax">Syntax and symbols</button>
-        <button data-action="howto">Using DFIELD on touch screens</button>
-        <button data-action="about">About DFIELD</button>
-      </section>
-    </div>
-  </dialog>
-
-  <!-- Generic dialog -->
-  <dialog id="dlg" class="modal">
-    <form method="dialog" id="dlgForm">
-      <div class="sheet-head"><strong id="dlgTitle"></strong><button class="icon-btn" value="cancel" formnovalidate aria-label="Close">✕</button></div>
-      <div id="dlgBody" class="dlg-body"></div>
-      <div id="dlgButtons" class="dlg-buttons"></div>
-    </form>
-  </dialog>
-
-  <script type="module" src="js/app.js"></script>
+  <script>
+    const APPS = [
+      { id: 'dfield', name: 'DFIELD', origin: 'Port of DFIELD · J. Polking & J. Castellanos',
+        text: 'Direction fields and solution curves for first-order ODEs x′ = f(t,x). Five numerical solvers, zoom, gallery.',
+        tags: ['ODE', 'direction field'] },
+      { id: 'winplot', name: 'Winplot', origin: 'Inspired by Winplot · Rick Parris',
+        text: 'The classic school plotter: explicit, parametric, polar and implicit curves, slope fields, sliders with animation, and 3D surfaces.',
+        tags: ['2D', '3D', 'plotting'] },
+      { id: 'xpp', name: 'XPP Lite', origin: 'Inspired by XPPAUT · G. B. Ermentrout',
+        text: 'Dynamical systems: n-dimensional ODE models (.ode files), phase planes, nullclines, equilibria and one-parameter bifurcation diagrams.',
+        tags: ['dynamical systems', 'bifurcation'] },
+      { id: 'xplormath', name: '3D XplorMath', origin: 'Inspired by 3D-XplorMath · R. Palais',
+        text: 'A museum of mathematical objects: minimal surfaces, knots, curves, polyhedra, fractals and strange attractors — rotate them with your fingers.',
+        tags: ['surfaces', 'polyhedra', 'fractals'] },
+      { id: 'maps', name: 'Iterated Maps', origin: 'Inspired by classic chaos applets',
+        text: 'Cobweb diagrams, bifurcation diagrams, Lyapunov exponents and 2D maps like Hénon and the standard map.',
+        tags: ['chaos', 'logistic map'] },
+      { id: 'mathlets', name: 'Mathlets', origin: 'Inspired by the MIT Mathlets',
+        text: 'Interactive demos for calculus, ODE and signals courses: Fourier series, resonance, convolution, poles, phase portraits and more.',
+        tags: ['Fourier', 'Laplace', 'vibrations'] },
+      { id: 'geometry', name: 'Geometry', origin: 'Inspired by Euklid DynaGeo & Wingeom',
+        text: 'Dynamic geometry: construct with compass and ruler, drag and watch everything update, measure, use loci and macros.',
+        tags: ['dynamic geometry', 'constructions'] },
+    ];
+    const grid = document.getElementById('apps');
+    for (const a of APPS) {
+      const card = document.createElement('a');
+      card.className = 'card';
+      card.href = `${a.id}/`;
+      card.innerHTML = `
+        <img src="${a.id}/icons/icon.svg" alt="" onerror="this.src='icon.svg'">
+        <div>
+          <h2></h2><div class="origin"></div><p></p>
+          <div class="tags">${a.tags.map(() => '<span></span>').join('')}</div>
+        </div>`;
+      card.querySelector('h2').textContent = a.name;
+      card.querySelector('.origin').textContent = a.origin;
+      card.querySelector('p').textContent = a.text;
+      card.querySelectorAll('.tags span').forEach((s, i) => { s.textContent = a.tags[i]; });
+      grid.append(card);
+    }
+  </script>
 </body>
 </html>

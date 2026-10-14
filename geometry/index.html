@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Geometry – Dynamic Constructions</title>
+  <meta name="description" content="Touch-friendly dynamic geometry: constructions with points, lines, circles, transformations, measurements, loci and macros.">
+  <meta name="theme-color" content="#2d3a4a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Geometry">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="toolbar">
+    <a id="btnHome" class="tb-btn" href="../" title="All apps" aria-label="All apps">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h5v-6h3v6h5V9.5"/></svg>
+    </a>
+    <button id="btnPanel" class="tb-btn" title="Objects / construction protocol" aria-label="Objects">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.4" class="fill"/><circle cx="4.5" cy="12" r="1.4" class="fill"/><circle cx="4.5" cy="18" r="1.4" class="fill"/></svg>
+    </button>
+    <div id="toolStrip" class="tool-strip" role="toolbar" aria-label="Tools"></div>
+    <button id="btnUndo" class="tb-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+    </button>
+    <button id="btnRedo" class="tb-btn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
+    </button>
+    <button id="btnFit" class="tb-btn hide-narrow" title="Zoom to fit (F)" aria-label="Zoom to fit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <button id="btnMenu" class="tb-btn" title="Menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" class="fill"/><circle cx="12" cy="12" r="1.6" class="fill"/><circle cx="19" cy="12" r="1.6" class="fill"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <aside id="panel" class="panel">
+      <div class="panel-head">
+        <strong data-s="ui.protocol">Construction protocol</strong>
+        <button type="button" id="btnPanelClose" class="icon-btn close-panel" aria-label="Close">✕</button>
+      </div>
+      <div class="replay">
+        <button id="btnReplayFirst" class="icon-btn" title="First step" aria-label="First step">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 5l-9 7 9 7z"/></svg>
+        </button>
+        <button id="btnReplayPrev" class="icon-btn" title="Previous step" aria-label="Previous step">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <input id="replaySlider" type="range" min="0" max="0" value="0" aria-label="Construction step">
+        <button id="btnReplayNext" class="icon-btn" title="Next step" aria-label="Next step">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button id="btnReplayPlay" class="icon-btn" title="Play construction" aria-label="Play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M7 5v14l12-7z"/></svg>
+        </button>
+      </div>
+      <div id="replayInfo" class="replay-info"></div>
+      <label class="check small"><input type="checkbox" id="chkShowAux"> <span data-s="ui.showAux">Show auxiliary (macro) objects</span></label>
+      <ol id="protocol" class="protocol"></ol>
+    </aside>
+
+    <section class="plot-area">
+      <div id="plotWrap" class="plot-wrap">
+        <canvas id="cv"></canvas>
+      </div>
+      <footer class="statusbar">
+        <span id="status">Ready.</span>
+        <span id="coords"></span>
+        <button id="btnStatusDone" class="pill primary-pill" hidden>Done</button>
+        <button id="btnStatusCancel" class="pill" hidden>✕ Cancel</button>
+      </footer>
+    </section>
+  </main>
+  <div id="scrim" class="scrim" hidden></div>
+  <div id="groupPop" class="group-pop" hidden></div>
+
+  <!-- Main menu -->
+  <dialog id="menuDlg" class="sheet">
+    <div class="sheet-head"><strong data-s="appName">Geometry</strong><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="sheet-body">
+      <section>
+        <h3 data-s="menu.file">File</h3>
+        <button data-action="newC">New construction</button>
+        <button data-action="examples">Example gallery…</button>
+        <button data-action="open">Open construction (JSON)…</button>
+        <button data-action="save">Save construction (JSON)</button>
+        <button data-action="png">Export image (PNG)</button>
+        <button data-action="svg">Export image (SVG)</button>
+        <input type="file" id="fileOpen" accept=".json,.geo.json,application/json" hidden>
+        <input type="file" id="fileMacros" accept=".json,application/json" hidden>
+      </section>
+      <section>
+        <h3 data-s="menu.edit">Edit</h3>
+        <button data-action="undo">Undo</button>
+        <button data-action="redo">Redo</button>
+        <button data-action="delSel">Delete selected object…</button>
+        <button data-action="showAll">Show all hidden objects</button>
+        <button data-action="clearTraces">Clear traces</button>
+      </section>
+      <section>
+        <h3 data-s="menu.view">View</h3>
+        <label class="check"><input type="checkbox" id="optGrid"> <span data-s="menu.grid">Grid</span></label>
+        <label class="check"><input type="checkbox" id="optAxes"> <span data-s="menu.axes">Coordinate axes</span></label>
+        <label class="check"><input type="checkbox" id="optSnap"> <span data-s="menu.snap">Snap points to grid</span></label>
+        <label class="check"><input type="checkbox" id="optHidden"> <span data-s="menu.showHidden">Show hidden objects faded</span></label>
+        <div class="row"><label for="optLabel" data-s="menu.labelSize">Label size</label>
+          <select id="optLabel"><option value="12">Small</option><option value="15">Normal</option><option value="18">Large</option><option value="22">Extra large</option></select></div>
+        <div class="row"><label for="optDec" data-s="menu.decimals">Decimal places</label>
+          <select id="optDec"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>6</option></select></div>
+        <button data-action="fit">Zoom to fit</button>
+        <button data-action="resetView">Reset view</button>
+      </section>
+      <section>
+        <h3 data-s="menu.macros">Macros</h3>
+        <button data-action="defineMacro">Define new macro…</button>
+        <button data-action="manageMacros">Manage macros…</button>
+      </section>
+      <section>
+        <h3 data-s="menu.help">Help</h3>
+        <button data-action="howto">How to use</button>
+        <button data-action="terms">Terms and expressions</button>
+        <button data-action="about">About</button>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Context menu (long press) -->
+  <dialog id="ctxDlg" class="ctx-menu">
+    <div id="ctxTitle" class="ctx-title"></div>
+    <div id="ctxBody" class="ctx-body"></div>
+  </dialog>
+
+  <!-- Generic dialog -->
+  <dialog id="dlg" class="modal">
+    <form method="dialog" id="dlgForm" autocomplete="off">
+      <div class="sheet-head"><strong id="dlgTitle"></strong><button class="icon-btn" value="cancel" formnovalidate aria-label="Close">✕</button></div>
+      <div id="dlgBody" class="dlg-body"></div>
+      <div id="dlgButtons" class="dlg-buttons"></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
